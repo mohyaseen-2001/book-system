@@ -1,30 +1,6 @@
-CREATE DATABASE coworking_db;
-
+CREATE DATABASE IF NOT EXISTS coworking_db CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE coworking_db;
-CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE spaces (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    capacity INT NOT NULL,
-    price DECIMAL(10,2) NOT NULL,
-    description TEXT
-);
-CREATE TABLE reservations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    space_id INT NOT NULL,
-    booking_date DATE NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    status ENUM('pending', 'confirmed', 'cancelled')
-        DEFAULT 'pending',
-
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (space_id) REFERENCES spaces(id)
-);
+CREATE TABLE users(id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(100) NOT NULL,email VARCHAR(150) NOT NULL UNIQUE,password VARCHAR(255) NOT NULL,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,role ENUM('admin','user') NOT NULL DEFAULT 'user',is_active TINYINT(1) NOT NULL DEFAULT 1) ENGINE=InnoDB;
+CREATE TABLE spaces(id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(100) NOT NULL,capacity INT NOT NULL,price DECIMAL(10,2) NOT NULL,description TEXT) ENGINE=InnoDB;
+CREATE TABLE time_slots(id INT AUTO_INCREMENT PRIMARY KEY,space_id INT NOT NULL,slot_date DATE NOT NULL,start_time TIME NOT NULL,end_time TIME NOT NULL,capacity INT NOT NULL,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,UNIQUE KEY unique_space_slot(space_id,slot_date,start_time,end_time),CONSTRAINT fk_time_slot_space FOREIGN KEY(space_id) REFERENCES spaces(id) ON DELETE RESTRICT) ENGINE=InnoDB;
+CREATE TABLE reservations(id INT AUTO_INCREMENT PRIMARY KEY,user_id INT NOT NULL,space_id INT NOT NULL,time_slot_id INT NULL,booking_date DATE NOT NULL,start_time TIME NOT NULL,end_time TIME NOT NULL,note VARCHAR(500) NULL,status ENUM('pending','confirmed','rejected','cancelled') NOT NULL DEFAULT 'pending',created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,UNIQUE KEY unique_user_time_slot(user_id,time_slot_id),INDEX idx_reservation_slot_status(time_slot_id,status),CONSTRAINT fk_reservation_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE RESTRICT,CONSTRAINT fk_reservation_space FOREIGN KEY(space_id) REFERENCES spaces(id) ON DELETE RESTRICT,CONSTRAINT fk_reservation_slot FOREIGN KEY(time_slot_id) REFERENCES time_slots(id) ON DELETE SET NULL) ENGINE=InnoDB;

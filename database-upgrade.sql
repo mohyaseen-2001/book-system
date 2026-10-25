@@ -1,0 +1,5 @@
+USE coworking_db;
+-- Back up first. Run once on the existing schema; existing rows are preserved.
+ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1;
+CREATE TABLE IF NOT EXISTS time_slots(id INT AUTO_INCREMENT PRIMARY KEY,space_id INT NOT NULL,slot_date DATE NOT NULL,start_time TIME NOT NULL,end_time TIME NOT NULL,capacity INT NOT NULL,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,UNIQUE KEY unique_space_slot(space_id,slot_date,start_time,end_time),CONSTRAINT fk_time_slot_space FOREIGN KEY(space_id) REFERENCES spaces(id) ON DELETE RESTRICT) ENGINE=InnoDB;
+ALTER TABLE reservations ADD COLUMN time_slot_id INT NULL AFTER space_id,ADD COLUMN note VARCHAR(500) NULL AFTER end_time,MODIFY COLUMN status ENUM('pending','confirmed','rejected','cancelled') NOT NULL DEFAULT 'pending',ADD UNIQUE KEY unique_user_time_slot(user_id,time_slot_id),ADD INDEX idx_reservation_slot_status(time_slot_id,status),ADD CONSTRAINT fk_reservation_slot FOREIGN KEY(time_slot_id) REFERENCES time_slots(id) ON DELETE SET NULL;
